@@ -13,7 +13,7 @@ OUTDIR=$2
 CHUNK_SIZE=50  # Number of peaks per chunk
 
 # Get the absolute path to the scripts directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="/gpfs/home/rodrij92/BALL_Corigami/ISGS_C.Origami/scripts"
 RUN_SCREEN_SCRIPT="${SCRIPT_DIR}/run_screen.sh"
 
 # Debug information
@@ -22,6 +22,12 @@ echo "BEDFILE: $BEDFILE"
 echo "OUTDIR: $OUTDIR"
 echo "Script directory: $SCRIPT_DIR"
 echo "Run screen script: $RUN_SCREEN_SCRIPT"
+
+# Verify script exists
+if [ ! -f "$RUN_SCREEN_SCRIPT" ]; then
+    echo "ERROR: Run screen script not found at $RUN_SCREEN_SCRIPT"
+    exit 1
+fi
 
 # Create output directory if it doesn't exist
 mkdir -p "${OUTDIR}"
