@@ -12,11 +12,16 @@ BEDFILE=$1
 OUTDIR=$2
 CHUNK_SIZE=50  # Number of peaks per chunk
 
+# Get the absolute path to the scripts directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUN_SCREEN_SCRIPT="${SCRIPT_DIR}/run_screen.sh"
+
 # Debug information
 echo "Current directory: $(pwd)"
 echo "BEDFILE: $BEDFILE"
 echo "OUTDIR: $OUTDIR"
-echo "Script directory: $(dirname "$0")"
+echo "Script directory: $SCRIPT_DIR"
+echo "Run screen script: $RUN_SCREEN_SCRIPT"
 
 # Create output directory if it doesn't exist
 mkdir -p "${OUTDIR}"
@@ -34,13 +39,6 @@ echo "Processing $total_peaks peaks in $num_chunks chunks of $CHUNK_SIZE peaks e
 # Split the bed file into chunks
 split -l $CHUNK_SIZE -d $BEDFILE bed_chunk_
 
-# Get the absolute path to run_screen.sh
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RUN_SCREEN_SCRIPT="${SCRIPT_DIR}/run_screen.sh"
-
-echo "Using run_screen.sh at: $RUN_SCREEN_SCRIPT"
-ls -l "$RUN_SCREEN_SCRIPT"
-
 # Submit all chunks in parallel
 for chunk in bed_chunk_*; do
     # Record chunk start time
@@ -56,6 +54,7 @@ for chunk in bed_chunk_*; do
                  --mem=10gb \
                  --time=28-00:00:00 \
                  --partition=gpu8_long \
+                 --export=ALL \
                  "$RUN_SCREEN_SCRIPT" "$chunk_abs_path" "${OUTDIR}" | awk '{print $4}')
     
     if [ -z "$JOB" ]; then
