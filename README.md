@@ -25,6 +25,7 @@ The script processes genomic regions in a hierarchical manner to efficiently han
 
 2. **Batching**:
    - Each chunk is further divided into batches of 1,000 regions
+   - This batch size is set to 1,000 as it's the maximum number of parallel jobs allowed by the HPC
    - Batches are processed sequentially within each chunk
    - Example: A 10,000 region chunk will be processed in 10 batches
 
