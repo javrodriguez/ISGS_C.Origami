@@ -10,7 +10,7 @@ overall_start_time=$(date +%s)
 
 BEDFILE=$1
 OUTDIR=$2
-CHUNK_SIZE=400  # Number of peaks per chunk
+MAX_JOBS=990  # Maximum number of jobs allowed
 
 # Get the absolute path to the scripts directory
 SCRIPT_DIR="/gpfs/home/rodrij92/BALL_Corigami/ISGS_C.Origami/scripts"
@@ -22,7 +22,6 @@ echo "BEDFILE: $BEDFILE"
 echo "OUTDIR: $OUTDIR"
 echo "Script directory: $SCRIPT_DIR"
 echo "Run screen script: $RUN_SCREEN_SCRIPT"
-echo "Chunk size: $CHUNK_SIZE peaks"
 
 # Verify script exists
 if [ ! -f "$RUN_SCREEN_SCRIPT" ]; then
@@ -39,6 +38,7 @@ echo "Chunk,Start Time,End Time,Duration (seconds)" > "${OUTDIR}/chunk_timing.cs
 
 # Calculate total number of peaks and chunks
 total_peaks=$(wc -l < "$BEDFILE")
+CHUNK_SIZE=$(( (total_peaks + MAX_JOBS - 1) / MAX_JOBS ))  # Ceiling division
 num_chunks=$(( (total_peaks + CHUNK_SIZE - 1) / CHUNK_SIZE ))
 
 echo "Processing $total_peaks peaks in $num_chunks chunks of $CHUNK_SIZE peaks each"
