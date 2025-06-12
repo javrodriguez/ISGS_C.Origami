@@ -51,8 +51,9 @@ for chunk in bed_chunk_*; do
     
     echo "Submitting chunk: $chunk_abs_path"
     
-    # Submit the chunk processing job
-    JOB=$(sbatch --mem=10gb \
+    # Submit the chunk processing job with array
+    JOB=$(sbatch --array=1-${CHUNK_SIZE} \
+                 --mem=10gb \
                  --time=28-00:00:00 \
                  --partition=gpu8_long \
                  "$RUN_SCREEN_SCRIPT" "$chunk_abs_path" "${OUTDIR}" | awk '{print $4}')
