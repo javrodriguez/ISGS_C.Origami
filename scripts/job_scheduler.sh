@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH -J jobScheduler
-#SBATCH --partition=gpu8_long
+#SBATCH --partition=cpu_short
 #SBATCH --mem=2gb 
-#SBATCH --output=logs-job_scheduler/%J.logout
-#SBATCH --error=logs-job_scheduler/%J.logerr
+#SBATCH --output=logs-cpu/%J.logout
+#SBATCH --error=logs-cpu/%J.logerr
 
 # Record overall start time
 overall_start_time=$(date +%s)
 
 BEDFILE=$1
 OUTDIR=$2
-CHUNK_SIZE=170  # Number of peaks per chunk
+CHUNK_SIZE=400  # Number of peaks per chunk
 
 # Get the absolute path to the scripts directory
 SCRIPT_DIR="/gpfs/home/rodrij92/BALL_Corigami/ISGS_C.Origami/scripts"
@@ -32,7 +32,7 @@ fi
 
 # Create output directory if it doesn't exist
 mkdir -p "${OUTDIR}"
-mkdir -p "logs-job_scheduler"
+mkdir -p "logs-cpu"
 
 # Create timing log file
 echo "Chunk,Start Time,End Time,Duration (seconds)" > "${OUTDIR}/chunk_timing.csv"
@@ -51,9 +51,9 @@ for chunk in bed_chunk_*; do
     chunk_start_time=$(date +%s)
     chunk_abs_path="$(pwd)/$chunk"
     echo "Submitting chunk: $chunk_abs_path"
-    JOB=$(sbatch --mem=10gb \
-                 --time=28-00:00:00 \
-                 --partition=gpu8_long \
+    JOB=$(sbatch --mem=2gb \
+                 --time=12:00:00 \
+                 --partition=cpu_short \
                  --export=ALL \
                  "$RUN_SCREEN_SCRIPT" "$chunk_abs_path" "${OUTDIR}" | awk '{print $4}')
     if [ -z "$JOB" ]; then

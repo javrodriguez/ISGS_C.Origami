@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -J screen
-#SBATCH --mem=10gb 
-#SBATCH --partition=gpu8_long
-#SBATCH --output=logs-screen/%J.out
-#SBATCH --error=logs-screen/%J.err
+#SBATCH --mem=2gb
+#SBATCH --partition=cpu_short
+#SBATCH --output=logs-cpu/%J.out
+#SBATCH --error=logs-cpu/%J.err
 
 bedfile=$1
 outdir=$2
