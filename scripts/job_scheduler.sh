@@ -43,11 +43,11 @@ num_chunks=$(( (total_peaks + CHUNK_SIZE - 1) / CHUNK_SIZE ))
 
 echo "Processing $total_peaks peaks in $num_chunks chunks of $CHUNK_SIZE peaks each"
 
-# Split the bed file into chunks
-split -l $CHUNK_SIZE -d $BEDFILE bed_chunk_
+# Split the bed file into chunks inside the output directory
+split -l $CHUNK_SIZE -d $BEDFILE "${OUTDIR}/bed_chunk_"
 
 # Submit one job per chunk (no array jobs)
-for chunk in bed_chunk_*; do
+for chunk in ${OUTDIR}/bed_chunk_*; do
     chunk_start_time=$(date +%s)
     chunk_abs_path="$(pwd)/$chunk"
     echo "Submitting chunk: $chunk_abs_path"
