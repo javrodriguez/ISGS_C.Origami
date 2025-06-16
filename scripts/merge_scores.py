@@ -8,14 +8,15 @@ from pathlib import Path
 def extract_peak_id(path):
     """Extract peak ID from directory path."""
     try:
-        # Get the parent directory of the bedgraph directory
-        parent_dir = path.parent.parent
-        # Get the peak directory name (e.g., PEAK_12588)
-        peak_dir = parent_dir.name
-        # Extract the number after PEAK_
-        if peak_dir.startswith('PEAK_'):
-            return peak_dir[5:]  # Remove 'PEAK_' prefix
-        print(f"Warning: Unexpected directory format: {peak_dir}")
+        # Convert to Path object if it's a string
+        path = Path(path)
+        # Get all parent directories
+        parts = path.parts
+        # Find the PEAK_ directory in the path
+        for part in parts:
+            if part.startswith('PEAK_'):
+                return part  # Return the full PEAK_XXXXX string
+        print(f"Warning: No PEAK_ directory found in path: {path}")
         return None
     except Exception as e:
         print(f"Error extracting peak ID from {path}: {str(e)}")
@@ -49,8 +50,7 @@ def main():
         for file_path in bedgraph_files:
             try:
                 # Extract peak ID from directory structure
-                path = Path(file_path)
-                peak_id = extract_peak_id(path)
+                peak_id = extract_peak_id(file_path)
                 
                 if peak_id is None:
                     error_count += 1
