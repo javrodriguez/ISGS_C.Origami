@@ -43,21 +43,30 @@ def main():
     file_size = os.path.getsize('temp_merged.txt')
     print(f"Size of temp_merged.txt: {file_size} bytes")
     
-    # Get list of all peak directories and their IDs
-    peak_ids = {Path(d).name.split('_')[1]: d for d in peak_dirs}
-    print(f"Found {len(peak_ids)} peak IDs")
+    # Create a mapping of file paths to peak IDs
+    path_to_peak = {}
+    for peak_dir in peak_dirs:
+        peak_id = Path(peak_dir).name.split('_')[1]
+        bedgraph_path = os.path.join(peak_dir, 'screening', 'bedgraph', '*_impact_score.bedgraph')
+        # Get the actual bedgraph file path
+        try:
+            bedgraph_file = subprocess.check_output(f"ls {bedgraph_path}", shell=True).decode().strip()
+            path_to_peak[bedgraph_file] = peak_id
+        except subprocess.CalledProcessError:
+            continue
+    
+    print(f"Created mapping for {len(path_to_peak)} bedgraph files")
     
     # Process the merged file and add peak IDs
     with open('temp_merged.txt', 'r') as infile, open('impact_scores.csv', 'w') as outfile:
         line_count = 0
         for line in infile:
-            # Extract the file path from the bedgraph filename
             parts = line.strip().split('\t')
             if len(parts) == 4:  # Ensure we have all expected columns
                 chrom, start, end, score = parts
-                # Find the matching peak directory by checking the coordinates
-                for peak_id, peak_dir in peak_ids.items():
-                    if f"{chrom}_{start}_{end}" in peak_dir:
+                # Find the matching peak ID by checking the file path
+                for file_path, peak_id in path_to_peak.items():
+                    if f"{chrom}_{start}_{end}" in file_path:
                         outfile.write(f"{line.strip()}\t{peak_id}\n")
                         line_count += 1
                         break
