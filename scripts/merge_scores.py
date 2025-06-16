@@ -10,14 +10,13 @@ def extract_peak_id(path):
     try:
         # Get the parent directory of the bedgraph directory
         parent_dir = path.parent.parent
-        # Get the peak directory name
+        # Get the peak directory name (e.g., PEAK_12588)
         peak_dir = parent_dir.name
-        # Split by underscore and get the second part
-        parts = peak_dir.split('_')
-        if len(parts) != 2:
-            print(f"Warning: Unexpected directory format: {peak_dir}")
-            return None
-        return parts[1]
+        # Extract the number after PEAK_
+        if peak_dir.startswith('PEAK_'):
+            return peak_dir[5:]  # Remove 'PEAK_' prefix
+        print(f"Warning: Unexpected directory format: {peak_dir}")
+        return None
     except Exception as e:
         print(f"Error extracting peak ID from {path}: {str(e)}")
         return None
