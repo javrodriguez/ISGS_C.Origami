@@ -2,66 +2,8 @@
 
 import os
 import sys
-import glob
-import pandas as pd
+import subprocess
 from pathlib import Path
-
-def extract_peak_id(file_path):
-    """Extract peak ID from the directory structure."""
-    # Convert to Path object for easier path manipulation
-    path = Path(file_path)
-    # Get the parent directory of the bedgraph directory
-    parent_dir = path.parent.parent
-    # Get the peak directory name and extract the ID
-    peak_dir = parent_dir.name
-    peak_id = peak_dir.split('_')[1]  # Assumes format PEAK_XXXXX
-    return peak_id
-
-def process_bedgraph_files(input_dir):
-    """Process all bedgraph files and combine their data."""
-    # Find all impact score bedgraph files
-    pattern = os.path.join(input_dir, "**", "screening", "bedgraph", "*_impact_score.bedgraph")
-    bedgraph_files = glob.glob(pattern, recursive=True)
-    
-    if not bedgraph_files:
-        print(f"No bedgraph files found in {input_dir}")
-        sys.exit(1)
-    
-    # List to store all data
-    all_data = []
-    
-    # Process each bedgraph file
-    for file_path in bedgraph_files:
-        try:
-            # Extract peak ID from directory structure
-            peak_id = extract_peak_id(file_path)
-            
-            # Read the bedgraph file
-            with open(file_path, 'r') as f:
-                line = f.readline().strip()
-                if line:
-                    # Split the line into columns
-                    chrom, start, end, impact_score = line.split('\t')
-                    
-                    # Add to our data list
-                    all_data.append({
-                        'chrom': chrom,
-                        'start': int(start),
-                        'end': int(end),
-                        'impact_score': float(impact_score),
-                        'peak_id': peak_id
-                    })
-        except Exception as e:
-            print(f"Error processing {file_path}: {str(e)}")
-            continue
-    
-    # Convert to DataFrame
-    df = pd.DataFrame(all_data)
-    
-    # Sort by chromosome and start position
-    df = df.sort_values(['chrom', 'start'])
-    
-    return df
 
 def main():
     # Check command line arguments
@@ -71,15 +13,55 @@ def main():
     
     input_dir = sys.argv[1]
     
-    # Process the files
-    print(f"Processing bedgraph files in {input_dir}...")
-    df = process_bedgraph_files(input_dir)
+    # Find all impact score bedgraph files
+    find_cmd = f"find {input_dir} -path '*/screening/bedgraph/*_impact_score.bedgraph'"
     
-    # Save to CSV
-    output_file = "impact_scores.csv"
-    df.to_csv(output_file, index=False)
-    print(f"Results saved to {output_file}")
-    print(f"Processed {len(df)} peaks")
+    print(f"Processing bedgraph files in {input_dir}...")
+    
+    # Create a temporary file to store the combined data
+    temp_file = "temp_impact_scores.txt"
+    
+    try:
+        # Use find to get all bedgraph files and process them
+        with open(temp_file, 'w') as outfile:
+            # Get list of files
+            files = subprocess.check_output(find_cmd, shell=True).decode().strip().split('\n')
+            
+            if not files or files[0] == '':
+                print(f"No bedgraph files found in {input_dir}")
+                sys.exit(1)
+            
+            # Process each file
+            for file_path in files:
+                try:
+                    # Extract peak ID from directory structure
+                    path = Path(file_path)
+                    peak_id = path.parent.parent.name.split('_')[1]
+                    
+                    # Read the bedgraph file and add peak_id
+                    with open(file_path, 'r') as infile:
+                        line = infile.readline().strip()
+                        if line:
+                            outfile.write(f"{line}\t{peak_id}\n")
+                except Exception as e:
+                    print(f"Error processing {file_path}: {str(e)}")
+                    continue
+        
+        # Sort the combined file by chromosome and start position
+        sort_cmd = f"sort -k1,1 -k2,2n {temp_file} > impact_scores.csv"
+        subprocess.run(sort_cmd, shell=True, check=True)
+        
+        # Count the number of peaks processed
+        wc_cmd = f"wc -l impact_scores.csv"
+        num_peaks = int(subprocess.check_output(wc_cmd, shell=True).decode().split()[0]) - 1  # Subtract header
+        
+        print(f"Results saved to impact_scores.csv")
+        print(f"Processed {num_peaks} peaks")
+        
+    finally:
+        # Clean up temporary file
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
 
 if __name__ == "__main__":
     main() 
