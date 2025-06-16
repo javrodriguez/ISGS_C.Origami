@@ -5,6 +5,23 @@ import sys
 import subprocess
 from pathlib import Path
 
+def extract_peak_id(path):
+    """Extract peak ID from directory path."""
+    try:
+        # Get the parent directory of the bedgraph directory
+        parent_dir = path.parent.parent
+        # Get the peak directory name
+        peak_dir = parent_dir.name
+        # Split by underscore and get the second part
+        parts = peak_dir.split('_')
+        if len(parts) != 2:
+            print(f"Warning: Unexpected directory format: {peak_dir}")
+            return None
+        return parts[1]
+    except Exception as e:
+        print(f"Error extracting peak ID from {path}: {str(e)}")
+        return None
+
 def main():
     # Check command line arguments
     if len(sys.argv) != 2:
@@ -29,11 +46,16 @@ def main():
     # Process files and write to output
     with open('impact_scores.csv', 'w') as outfile:
         line_count = 0
+        error_count = 0
         for file_path in bedgraph_files:
             try:
                 # Extract peak ID from directory structure
                 path = Path(file_path)
-                peak_id = path.parent.parent.name.split('_')[1]
+                peak_id = extract_peak_id(path)
+                
+                if peak_id is None:
+                    error_count += 1
+                    continue
                 
                 # Read and process the bedgraph file
                 with open(file_path, 'r') as infile:
@@ -43,9 +65,12 @@ def main():
                         line_count += 1
             except Exception as e:
                 print(f"Error processing {file_path}: {str(e)}")
+                error_count += 1
                 continue
     
-    print(f"Processed {line_count} lines")
+    print(f"Processed {line_count} lines successfully")
+    if error_count > 0:
+        print(f"Encountered {error_count} errors")
     
     # Sort the final file
     sort_cmd = "sort -k1,1 -k2,2n impact_scores.csv > temp_sorted.txt && mv temp_sorted.txt impact_scores.csv"
