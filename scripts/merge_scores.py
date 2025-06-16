@@ -66,7 +66,7 @@ def process_bedgraph_files(input_dir):
 def main():
     # Check command line arguments
     if len(sys.argv) != 2:
-        print("Usage: mergeImpactScores.py <input_dir>")
+        print("Usage: merge_scores.py <input_dir>")
         sys.exit(1)
     
     input_dir = sys.argv[1]
